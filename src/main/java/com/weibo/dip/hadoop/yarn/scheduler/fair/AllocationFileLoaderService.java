@@ -368,7 +368,7 @@ public class AllocationFileLoaderService extends AbstractService {
 		for (Element groupElement : groupElements) {
 			String groupName = groupElement.getAttribute("name");
 
-			if (groups.containsKey(groupName)) {
+			if (!groups.containsKey(groupName)) {
 				groups.put(groupName, new HashSet<>());
 			}
 
