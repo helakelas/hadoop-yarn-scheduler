@@ -331,7 +331,7 @@ public class FSLeafQueue extends FSQueue {
 				for (Entry<String, Set<String>> entry : groups.entrySet()) {
 					groupName = entry.getKey();
 
-					if (queueName.startsWith(groupName)) {
+					if (queueName.startsWith("root." + groupName)) {
 						nodes = entry.getValue();
 
 						break;
