@@ -365,9 +365,16 @@ public class AllocationFileLoaderService extends AbstractService {
 		for (Element element : groupElements) {
 			String groupName = element.getAttribute("name");
 
-			Element nodesElement = (Element) element.getChildNodes().item(0);
+			NodeList nodeElements = element.getChildNodes();
 
-			LOG.warn("groupName: " + groupName + ", nodes: " + nodesElement);
+			for (int index = 0; index < nodeElements.getLength(); index++) {
+				Node node = nodeElements.item(index);
+
+				if (node instanceof Element) {
+					LOG.info(node + "");
+				}
+			}
+
 		}
 
 		AllocationConfiguration info = new AllocationConfiguration(minQueueResources, maxQueueResources, queueMaxApps,
