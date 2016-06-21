@@ -21,7 +21,6 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -366,9 +365,9 @@ public class AllocationFileLoaderService extends AbstractService {
 		for (Element element : groupElements) {
 			String groupName = element.getAttribute("name");
 
-			String[] nodes = ((Text) element.getFirstChild()).getData().trim().split(",");
+			Element nodesElement = (Element) element.getChildNodes().item(0);
 
-			LOG.warn("groupName: " + groupName + ", nodes: " + Arrays.toString(nodes));
+			LOG.warn("groupName: " + groupName + ", nodes: " + nodesElement);
 		}
 
 		AllocationConfiguration info = new AllocationConfiguration(minQueueResources, maxQueueResources, queueMaxApps,
