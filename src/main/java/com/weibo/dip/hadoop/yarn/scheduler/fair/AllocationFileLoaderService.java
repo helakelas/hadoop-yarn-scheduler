@@ -25,6 +25,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import javax.xml.parsers.DocumentBuilder;
@@ -362,8 +363,14 @@ public class AllocationFileLoaderService extends AbstractService {
 			fairSharePreemptionThresholds.put(QueueManager.ROOT_QUEUE, defaultFairSharePreemptionThreshold);
 		}
 
+		Map<String, Set<String>> groups = new HashMap<>();
+
 		for (Element groupElement : groupElements) {
 			String groupName = groupElement.getAttribute("name");
+
+			if (groups.containsKey(groupName)) {
+				groups.put(groupName, new HashSet<>());
+			}
 
 			NodeList nodeElements = groupElement.getChildNodes();
 
@@ -373,10 +380,15 @@ public class AllocationFileLoaderService extends AbstractService {
 				if (node instanceof Element) {
 					Element element = (Element) node;
 
-					LOG.info("node: " + ((Text) element.getFirstChild()).getData().trim());
+					String hostname = ((Text) element.getFirstChild()).getData().trim();
+
+					groups.get(groupName).add(hostname);
 				}
 			}
+		}
 
+		for (Entry<String, Set<String>> entry : groups.entrySet()) {
+			LOG.info("groupName: " + entry.getKey() + ", nodes: " + entry.getValue());
 		}
 
 		AllocationConfiguration info = new AllocationConfiguration(minQueueResources, maxQueueResources, queueMaxApps,
