@@ -26,10 +26,14 @@ import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.collections.MapUtils;
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.classification.InterfaceAudience.LimitedPrivate;
@@ -597,19 +601,29 @@ public class YarnStreamingFairScheduler extends AbstractYarnScheduler<FSAppAttem
 		}
 
 		// Enforce Groups
-		boolean allocateGroup = false;
+		Map<String, Set<String>> groups = allocConf.getGroups();
 
-		for (Entry<String, Set<String>> entry : allocConf.getGroups().entrySet()) {
-			String groupName = entry.getKey();
+		if (MapUtils.isEmpty(groups)) {
+			String msg = "Application cannot be submited to any queue, because of these queues aren't allocated to any groups";
 
-			if (queueName.startsWith(groupName)) {
-				allocateGroup = true;
+			LOG.info(msg);
+
+			rmContext.getDispatcher().getEventHandler().handle(new RMAppRejectedEvent(applicationId, msg));
+
+			return;
+		}
+
+		String groupName = null;
+
+		for (Entry<String, Set<String>> entry : groups.entrySet()) {
+			if (queueName.startsWith(entry.getKey())) {
+				groupName = entry.getKey();
 
 				break;
 			}
 		}
 
-		if (!allocateGroup) {
+		if (StringUtils.isEmpty(groupName)) {
 			String msg = "Application cannot be submited to queue " + queueName
 					+ ", because of the queue doesn't belong to any group";
 
@@ -618,6 +632,17 @@ public class YarnStreamingFairScheduler extends AbstractYarnScheduler<FSAppAttem
 			rmContext.getDispatcher().getEventHandler().handle(new RMAppRejectedEvent(applicationId, msg));
 
 			return;
+		} else {
+			if (CollectionUtils.isEmpty(groups.get(groupName))) {
+				String msg = "Application cannot be submited to queue " + queueName
+						+ ", because of the queue belong to group " + groupName + ", but the group has no nodes";
+
+				LOG.info(msg);
+
+				rmContext.getDispatcher().getEventHandler().handle(new RMAppRejectedEvent(applicationId, msg));
+
+				return;
+			}
 		}
 
 		SchedulerApplication<FSAppAttempt> application = new SchedulerApplication<FSAppAttempt>(queue, user);
