@@ -21,6 +21,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -251,14 +252,21 @@ public class AllocationFileLoaderService extends AbstractService {
 			throw new AllocationConfigurationException(
 					"Bad fair scheduler config " + "file: top-level element not <allocations>");
 		NodeList elements = root.getChildNodes();
+
 		List<Element> queueElements = new ArrayList<Element>();
+
+		List<Element> groupElements = new ArrayList<>();
+
 		Element placementPolicyElement = null;
+
 		for (int i = 0; i < elements.getLength(); i++) {
 			Node node = elements.item(i);
 			if (node instanceof Element) {
 				Element element = (Element) node;
 				if ("queue".equals(element.getTagName()) || "pool".equals(element.getTagName())) {
 					queueElements.add(element);
+				} else if ("group".equals(element.getTagName())) {
+					groupElements.add(element);
 				} else if ("user".equals(element.getTagName())) {
 					String userName = element.getAttribute("name");
 					NodeList fields = element.getChildNodes();
@@ -353,6 +361,14 @@ public class AllocationFileLoaderService extends AbstractService {
 		// Set the fair share preemption threshold for the root queue
 		if (!fairSharePreemptionThresholds.containsKey(QueueManager.ROOT_QUEUE)) {
 			fairSharePreemptionThresholds.put(QueueManager.ROOT_QUEUE, defaultFairSharePreemptionThreshold);
+		}
+
+		for (Element element : groupElements) {
+			String groupName = element.getAttribute("name");
+
+			String[] nodes = element.getFirstChild().getTextContent().split(",");
+
+			LOG.warn("groupName: " + groupName + ", nodes: " + Arrays.toString(nodes));
 		}
 
 		AllocationConfiguration info = new AllocationConfiguration(minQueueResources, maxQueueResources, queueMaxApps,
