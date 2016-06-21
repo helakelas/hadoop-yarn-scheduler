@@ -70,7 +70,7 @@ public class FSAppAttempt extends SchedulerApplicationAttempt implements Schedul
 	private Priority priority;
 	private ResourceWeights resourceWeights;
 	private Resource demand = Resources.createResource(0);
-	private FairScheduler scheduler;
+	private YarnStreamingFairScheduler scheduler;
 	private Resource fairShare = Resources.createResource(0, 0);
 	private Resource preemptedResources = Resources.createResource(0);
 	private RMContainerComparator comparator = new RMContainerComparator();
@@ -88,7 +88,7 @@ public class FSAppAttempt extends SchedulerApplicationAttempt implements Schedul
 	 */
 	private final Map<Priority, NodeType> allowedLocalityLevel = new HashMap<Priority, NodeType>();
 
-	public FSAppAttempt(FairScheduler scheduler, ApplicationAttemptId applicationAttemptId, String user,
+	public FSAppAttempt(YarnStreamingFairScheduler scheduler, ApplicationAttemptId applicationAttemptId, String user,
 			FSLeafQueue queue, ActiveUsersManager activeUsersManager, RMContext rmContext) {
 		super(applicationAttemptId, user, queue, activeUsersManager, rmContext);
 
@@ -494,7 +494,7 @@ public class FSAppAttempt extends SchedulerApplicationAttempt implements Schedul
 			// The desired container won't fit here, so reserve
 			reserve(request.getPriority(), node, container, reserved);
 
-			return FairScheduler.CONTAINER_RESERVED;
+			return YarnStreamingFairScheduler.CONTAINER_RESERVED;
 		}
 	}
 

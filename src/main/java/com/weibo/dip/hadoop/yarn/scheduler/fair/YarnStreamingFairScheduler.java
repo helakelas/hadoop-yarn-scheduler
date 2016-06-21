@@ -118,7 +118,7 @@ import com.google.common.base.Preconditions;
 @LimitedPrivate("yarn")
 @Unstable
 @SuppressWarnings("unchecked")
-public class FairScheduler extends AbstractYarnScheduler<FSAppAttempt, FSSchedulerNode> {
+public class YarnStreamingFairScheduler extends AbstractYarnScheduler<FSAppAttempt, FSSchedulerNode> {
 	private FairSchedulerConfiguration conf;
 
 	private Resource incrAllocation;
@@ -126,7 +126,7 @@ public class FairScheduler extends AbstractYarnScheduler<FSAppAttempt, FSSchedul
 	private volatile Clock clock;
 	private boolean usePortForNodeName;
 
-	private static final Log LOG = LogFactory.getLog(FairScheduler.class);
+	private static final Log LOG = LogFactory.getLog(YarnStreamingFairScheduler.class);
 
 	private static final ResourceCalculator RESOURCE_CALCULATOR = new DefaultResourceCalculator();
 
@@ -199,8 +199,8 @@ public class FairScheduler extends AbstractYarnScheduler<FSAppAttempt, FSSchedul
 	@VisibleForTesting
 	AllocationConfiguration allocConf;
 
-	public FairScheduler() {
-		super(FairScheduler.class.getName());
+	public YarnStreamingFairScheduler() {
+		super(YarnStreamingFairScheduler.class.getName());
 		clock = new SystemClock();
 		allocsLoader = new AllocationFileLoaderService();
 		queueMgr = new QueueManager(this);
@@ -244,7 +244,7 @@ public class FairScheduler extends AbstractYarnScheduler<FSAppAttempt, FSSchedul
 	}
 
 	/**
-	 * Thread which calls {@link FairScheduler#update()} every
+	 * Thread which calls {@link YarnStreamingFairScheduler#update()} every
 	 * <code>updateInterval</code> milliseconds.
 	 */
 	private class UpdateThread extends Thread {
@@ -1326,7 +1326,7 @@ public class FairScheduler extends AbstractYarnScheduler<FSAppAttempt, FSSchedul
 			// file
 			// if it does not already exist, so it can be displayed on the web
 			// UI.
-			synchronized (FairScheduler.this) {
+			synchronized (YarnStreamingFairScheduler.this) {
 				allocConf = queueInfo;
 				allocConf.getDefaultSchedulingPolicy().initialize(clusterResource);
 				queueMgr.updateAllocationConfiguration(allocConf);

@@ -48,13 +48,13 @@ public class QueueManager {
 
 	public static final String ROOT_QUEUE = "root";
 
-	private final FairScheduler scheduler;
+	private final YarnStreamingFairScheduler scheduler;
 
 	private final Collection<FSLeafQueue> leafQueues = new CopyOnWriteArrayList<FSLeafQueue>();
 	private final Map<String, FSQueue> queues = new HashMap<String, FSQueue>();
 	private FSParentQueue rootQueue;
 
-	public QueueManager(FairScheduler scheduler) {
+	public QueueManager(YarnStreamingFairScheduler scheduler) {
 		this.scheduler = scheduler;
 	}
 

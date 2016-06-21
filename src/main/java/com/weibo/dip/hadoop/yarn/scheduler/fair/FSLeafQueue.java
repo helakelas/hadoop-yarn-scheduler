@@ -68,7 +68,7 @@ public class FSLeafQueue extends FSQueue {
 
 	private final ActiveUsersManager activeUsersManager;
 
-	public FSLeafQueue(String name, FairScheduler scheduler, FSParentQueue parent) {
+	public FSLeafQueue(String name, YarnStreamingFairScheduler scheduler, FSParentQueue parent) {
 		super(name, scheduler, parent);
 		this.lastTimeAtMinShare = scheduler.getClock().getTime();
 		this.lastTimeAtFairShareThreshold = scheduler.getClock().getTime();
@@ -528,9 +528,9 @@ public class FSLeafQueue extends FSQueue {
 	}
 
 	private boolean isStarved(Resource share) {
-		Resource desiredShare = Resources.min(FairScheduler.getResourceCalculator(), scheduler.getClusterResource(),
+		Resource desiredShare = Resources.min(YarnStreamingFairScheduler.getResourceCalculator(), scheduler.getClusterResource(),
 				share, getDemand());
-		return Resources.lessThan(FairScheduler.getResourceCalculator(), scheduler.getClusterResource(),
+		return Resources.lessThan(YarnStreamingFairScheduler.getResourceCalculator(), scheduler.getClusterResource(),
 				getResourceUsage(), desiredShare);
 	}
 }
