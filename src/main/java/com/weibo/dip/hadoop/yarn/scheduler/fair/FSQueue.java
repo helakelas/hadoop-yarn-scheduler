@@ -267,6 +267,13 @@ public abstract class FSQueue implements Queue, Schedulable {
 		return getNumRunnableApps() > 0;
 	}
 
+	/**
+	 * @return the scheduler
+	 */
+	public YarnStreamingFairScheduler getScheduler() {
+		return scheduler;
+	}
+
 	/** Convenient toString implementation for debugging. */
 	@Override
 	public String toString() {

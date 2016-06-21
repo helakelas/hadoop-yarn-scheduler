@@ -23,6 +23,9 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -314,7 +317,35 @@ public class FSLeafQueue extends FSQueue {
 		}
 		readLock.lock();
 		try {
+			String nodeHostName = node.getNodeID().getHost();
+
+			Map<String, Set<String>> groups = getScheduler().getAllocationConfiguration().getGroups();
+
 			for (FSAppAttempt sched : runnableApps) {
+				boolean allocateGroup = false;
+
+				String queueName = sched.getQueueName();
+
+				String groupName = null;
+
+				for (Entry<String, Set<String>> entry : groups.entrySet()) {
+					if (queueName.startsWith(entry.getKey())) {
+						groupName = entry.getKey();
+
+						allocateGroup = true;
+					}
+				}
+
+				if (!allocateGroup) {
+					LOG.info("ApplicationId: " + sched.getApplicationId().toString() + " allocate to group failure");
+
+					continue;
+				}
+
+				if (!groups.get(groupName).contains(nodeHostName)) {
+					continue;
+				}
+
 				if (SchedulerAppUtils.isBlacklisted(sched, node, LOG)) {
 					continue;
 				}
@@ -528,8 +559,8 @@ public class FSLeafQueue extends FSQueue {
 	}
 
 	private boolean isStarved(Resource share) {
-		Resource desiredShare = Resources.min(YarnStreamingFairScheduler.getResourceCalculator(), scheduler.getClusterResource(),
-				share, getDemand());
+		Resource desiredShare = Resources.min(YarnStreamingFairScheduler.getResourceCalculator(),
+				scheduler.getClusterResource(), share, getDemand());
 		return Resources.lessThan(YarnStreamingFairScheduler.getResourceCalculator(), scheduler.getClusterResource(),
 				getResourceUsage(), desiredShare);
 	}
