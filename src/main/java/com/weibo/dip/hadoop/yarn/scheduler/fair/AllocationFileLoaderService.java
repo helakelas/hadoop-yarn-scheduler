@@ -395,7 +395,7 @@ public class AllocationFileLoaderService extends AbstractService {
 				userMaxApps, queueWeights, queueMaxAMShares, userMaxAppsDefault, queueMaxAppsDefault,
 				queueMaxAMShareDefault, queuePolicies, defaultSchedPolicy, minSharePreemptionTimeouts,
 				fairSharePreemptionTimeouts, fairSharePreemptionThresholds, queueAcls, newPlacementPolicy,
-				configuredQueues);
+				configuredQueues, groups);
 
 		lastSuccessfulReload = clock.getTime();
 		lastReloadAttemptFailed = false;

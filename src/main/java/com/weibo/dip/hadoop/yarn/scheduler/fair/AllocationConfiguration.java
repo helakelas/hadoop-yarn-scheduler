@@ -91,6 +91,8 @@ public class AllocationConfiguration {
 	@VisibleForTesting
 	Map<FSQueueType, Set<String>> configuredQueues;
 
+	Map<String, Set<String>> groups;
+
 	public AllocationConfiguration(Map<String, Resource> minQueueResources, Map<String, Resource> maxQueueResources,
 			Map<String, Integer> queueMaxApps, Map<String, Integer> userMaxApps,
 			Map<String, ResourceWeights> queueWeights, Map<String, Float> queueMaxAMShares, int userMaxAppsDefault,
@@ -98,7 +100,7 @@ public class AllocationConfiguration {
 			SchedulingPolicy defaultSchedulingPolicy, Map<String, Long> minSharePreemptionTimeouts,
 			Map<String, Long> fairSharePreemptionTimeouts, Map<String, Float> fairSharePreemptionThresholds,
 			Map<String, Map<QueueACL, AccessControlList>> queueAcls, QueuePlacementPolicy placementPolicy,
-			Map<FSQueueType, Set<String>> configuredQueues) {
+			Map<FSQueueType, Set<String>> configuredQueues, Map<String, Set<String>> groups) {
 		this.minQueueResources = minQueueResources;
 		this.maxQueueResources = maxQueueResources;
 		this.queueMaxApps = queueMaxApps;
@@ -116,6 +118,8 @@ public class AllocationConfiguration {
 		this.queueAcls = queueAcls;
 		this.placementPolicy = placementPolicy;
 		this.configuredQueues = configuredQueues;
+
+		this.groups = groups;
 	}
 
 	public AllocationConfiguration(Configuration conf) {
@@ -138,6 +142,9 @@ public class AllocationConfiguration {
 		for (FSQueueType queueType : FSQueueType.values()) {
 			configuredQueues.put(queueType, new HashSet<String>());
 		}
+
+		this.groups = new HashMap<>();
+
 		placementPolicy = QueuePlacementPolicy.fromConfiguration(conf, configuredQueues);
 	}
 
@@ -256,4 +263,9 @@ public class AllocationConfiguration {
 	public QueuePlacementPolicy getPlacementPolicy() {
 		return placementPolicy;
 	}
+
+	public Map<String, Set<String>> getGroups() {
+		return groups;
+	}
+
 }
