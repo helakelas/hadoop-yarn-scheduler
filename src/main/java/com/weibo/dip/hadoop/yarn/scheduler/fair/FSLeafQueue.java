@@ -326,6 +326,8 @@ public class FSLeafQueue extends FSQueue {
 
 				String queueName = sched.getQueueName();
 
+				LOG.info("queueName: " + queueName);
+
 				String groupName = null;
 
 				for (Entry<String, Set<String>> entry : groups.entrySet()) {
