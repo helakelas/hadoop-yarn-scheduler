@@ -362,16 +362,18 @@ public class AllocationFileLoaderService extends AbstractService {
 			fairSharePreemptionThresholds.put(QueueManager.ROOT_QUEUE, defaultFairSharePreemptionThreshold);
 		}
 
-		for (Element element : groupElements) {
-			String groupName = element.getAttribute("name");
+		for (Element groupElement : groupElements) {
+			String groupName = groupElement.getAttribute("name");
 
-			NodeList nodeElements = element.getChildNodes();
+			NodeList nodeElements = groupElement.getChildNodes();
 
 			for (int index = 0; index < nodeElements.getLength(); index++) {
 				Node node = nodeElements.item(index);
 
 				if (node instanceof Element) {
-					LOG.info(node + "");
+					Element element = (Element) node;
+
+					LOG.info("node: " + ((Text) element.getFirstChild()).getData().trim());
 				}
 			}
 
