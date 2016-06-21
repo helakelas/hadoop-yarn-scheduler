@@ -366,7 +366,7 @@ public class AllocationFileLoaderService extends AbstractService {
 		for (Element element : groupElements) {
 			String groupName = element.getAttribute("name");
 
-			String[] nodes = element.getFirstChild().getTextContent().split(",");
+			String[] nodes = ((Text) element.getFirstChild()).getData().trim().split(",");
 
 			LOG.warn("groupName: " + groupName + ", nodes: " + Arrays.toString(nodes));
 		}
