@@ -800,7 +800,7 @@ public class YarnStreamingFairScheduler extends AbstractYarnScheduler<FSAppAttem
 	protected synchronized void completedContainer(RMContainer rmContainer, ContainerStatus containerStatus,
 			RMContainerEventType event) {
 		if (rmContainer == null) {
-			LOG.info("Null container completed...");
+			LOG.debug("Null container completed...");
 			return;
 		}
 
