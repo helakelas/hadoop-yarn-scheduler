@@ -322,31 +322,28 @@ public class FSLeafQueue extends FSQueue {
 			Map<String, Set<String>> groups = getScheduler().getAllocationConfiguration().getGroups();
 
 			for (FSAppAttempt sched : runnableApps) {
-				boolean allocateGroup = false;
-
 				String queueName = sched.getQueueName();
-
-				LOG.info("queueName: " + queueName);
 
 				String groupName = null;
 
-				for (Entry<String, Set<String>> entry : groups.entrySet()) {
-					if (queueName.startsWith(entry.getKey())) {
-						groupName = entry.getKey();
+				Set<String> nodes = null;
 
-						allocateGroup = true;
+				for (Entry<String, Set<String>> entry : groups.entrySet()) {
+					groupName = entry.getKey();
+
+					if (queueName.startsWith(groupName)) {
+						nodes = entry.getValue();
+
+						break;
 					}
 				}
 
-				if (!allocateGroup) {
-					LOG.info("ApplicationId: " + sched.getApplicationId().toString() + " allocate to group failure");
-
+				if (!nodes.contains(nodeHostName)) {
 					continue;
 				}
 
-				if (!groups.get(groupName).contains(nodeHostName)) {
-					continue;
-				}
+				LOG.info("ApplicationId " + sched.getApplicationId() + " will try to allocate to [" + groupName + ", "
+						+ nodeHostName + "]");
 
 				if (SchedulerAppUtils.isBlacklisted(sched, node, LOG)) {
 					continue;

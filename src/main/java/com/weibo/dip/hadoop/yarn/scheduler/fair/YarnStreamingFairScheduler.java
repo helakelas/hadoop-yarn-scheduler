@@ -26,6 +26,7 @@ import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -592,6 +593,30 @@ public class YarnStreamingFairScheduler extends AbstractYarnScheduler<FSAppAttem
 			String msg = "User " + userUgi.getUserName() + " cannot submit applications to queue " + queue.getName();
 			LOG.info(msg);
 			rmContext.getDispatcher().getEventHandler().handle(new RMAppRejectedEvent(applicationId, msg));
+			return;
+		}
+
+		// Enforce Groups
+		boolean allocateGroup = false;
+
+		for (Entry<String, Set<String>> entry : allocConf.getGroups().entrySet()) {
+			String groupName = entry.getKey();
+
+			if (queueName.startsWith(groupName)) {
+				allocateGroup = true;
+
+				break;
+			}
+		}
+
+		if (!allocateGroup) {
+			String msg = "Application cannot be submited to queue " + queueName
+					+ ", because of the queue doesn't belong to any group";
+
+			LOG.info(msg);
+
+			rmContext.getDispatcher().getEventHandler().handle(new RMAppRejectedEvent(applicationId, msg));
+
 			return;
 		}
 
