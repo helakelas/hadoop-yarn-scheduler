@@ -601,6 +601,12 @@ public class FairScheduler extends AbstractYarnScheduler<FSAppAttempt, FSSchedul
 		}
 
 		// Enforce Groups
+		String normalizeQueueName = queueName;
+
+		if (normalizeQueueName.startsWith("root.")) {
+			normalizeQueueName = normalizeQueueName.substring(5);
+		}
+		
 		Map<String, Set<String>> groups = allocConf.getGroups();
 
 		if (MapUtils.isEmpty(groups)) {
@@ -616,7 +622,7 @@ public class FairScheduler extends AbstractYarnScheduler<FSAppAttempt, FSSchedul
 		String groupName = null;
 
 		for (Entry<String, Set<String>> entry : groups.entrySet()) {
-			if (queueName.startsWith(entry.getKey())) {
+			if (normalizeQueueName.startsWith(entry.getKey())) {
 				groupName = entry.getKey();
 
 				break;
