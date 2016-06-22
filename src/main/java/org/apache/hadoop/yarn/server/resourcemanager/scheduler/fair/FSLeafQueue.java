@@ -342,8 +342,9 @@ public class FSLeafQueue extends FSQueue {
 					continue;
 				}
 
-				LOG.info("ApplicationId " + sched.getApplicationId() + " will try to allocate to [" + groupName + ", "
+				LOG.debug("ApplicationId " + sched.getApplicationId() + " will try to allocate to [" + groupName + ", "
 						+ nodeHostName + "]");
+
 				if (SchedulerAppUtils.isBlacklisted(sched, node, LOG)) {
 					continue;
 				}
