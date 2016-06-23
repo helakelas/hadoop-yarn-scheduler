@@ -1,0 +1,7 @@
+cp -rf src/main/java/* HADOOP_SOURCE_DIR/hadoop-2.5.0-cdh5.3.2/hadoop-yarn-project/hadoop-yarn/hadoop-yarn-server/hadoop-yarn-server-resourcemanager/src/main/java/
+
+cd HADOOP_SOURCE_DIR/hadoop-2.5.0-cdh5.3.2/hadoop-yarn-project/hadoop-yarn/hadoop-yarn-server/hadoop-yarn-server-resourcemanager/src/main/java/
+
+mvn clean package -Dmaven.test.skip=true
+
+cp HADOOP_SOURCE_DIR/hadoop-2.5.0-cdh5.3.2/hadoop-yarn-project/hadoop-yarn/hadoop-yarn-server/hadoop-yarn-server-resourcemanager/target/hadoop-yarn-server-resourcemanager-2.5.0-cdh5.3.2.jar /usr/lib/hadoop-yarn/hadoop-yarn-server-resourcemanager-2.5.0-cdh5.3.2.jar
