@@ -309,14 +309,21 @@ public class FSLeafQueue extends FSQueue {
 		}
 
 		Comparator<Schedulable> comparator = policy.getComparator();
+
 		writeLock.lock();
+
 		try {
 			Collections.sort(runnableApps, comparator);
 		} finally {
 			writeLock.unlock();
 		}
+
 		readLock.lock();
+
 		try {
+			/*
+			 * Extended Group
+			 */
 			String nodeHostName = node.getNodeID().getHost();
 
 			Map<String, Set<String>> groups = getScheduler().getAllocationConfiguration().getGroups();
@@ -329,7 +336,7 @@ public class FSLeafQueue extends FSQueue {
 
 				for (Entry<String, Set<String>> entry : groups.entrySet()) {
 					groupName = entry.getKey();
-
+					// judge queueName prefix
 					if (queueName.startsWith("root." + groupName)) {
 						nodes = entry.getValue();
 
@@ -356,6 +363,7 @@ public class FSLeafQueue extends FSQueue {
 		} finally {
 			readLock.unlock();
 		}
+
 		return assigned;
 	}
 

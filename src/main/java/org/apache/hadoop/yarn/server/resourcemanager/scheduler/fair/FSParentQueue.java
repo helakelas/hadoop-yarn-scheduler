@@ -34,220 +34,212 @@ import org.apache.hadoop.yarn.api.records.QueueACL;
 import org.apache.hadoop.yarn.api.records.QueueUserACLInfo;
 import org.apache.hadoop.yarn.api.records.Resource;
 import org.apache.hadoop.yarn.server.resourcemanager.rmcontainer.RMContainer;
-import org.apache.hadoop.yarn.util.resource.Resources;
 import org.apache.hadoop.yarn.server.resourcemanager.scheduler.ActiveUsersManager;
 import org.apache.hadoop.yarn.server.resourcemanager.scheduler.SchedulerApplicationAttempt;
+import org.apache.hadoop.yarn.util.resource.Resources;
 
 @Private
 @Unstable
 public class FSParentQueue extends FSQueue {
-  private static final Log LOG = LogFactory.getLog(
-      FSParentQueue.class.getName());
+	private static final Log LOG = LogFactory.getLog(FSParentQueue.class.getName());
 
-  private final List<FSQueue> childQueues = 
-      new ArrayList<FSQueue>();
-  private Resource demand = Resources.createResource(0);
-  private int runnableApps;
-  
-  public FSParentQueue(String name, FairScheduler scheduler,
-      FSParentQueue parent) {
-    super(name, scheduler, parent);
-  }
-  
-  public void addChildQueue(FSQueue child) {
-    childQueues.add(child);
-  }
+	private final List<FSQueue> childQueues = new ArrayList<FSQueue>();
+	private Resource demand = Resources.createResource(0);
+	private int runnableApps;
 
-  @Override
-  public void recomputeShares() {
-    policy.computeShares(childQueues, getFairShare());
-    for (FSQueue childQueue : childQueues) {
-      childQueue.getMetrics().setFairShare(childQueue.getFairShare());
-      childQueue.recomputeShares();
-    }
-  }
+	public FSParentQueue(String name, FairScheduler scheduler, FSParentQueue parent) {
+		super(name, scheduler, parent);
+	}
 
-  public void recomputeSteadyShares() {
-    policy.computeSteadyShares(childQueues, getSteadyFairShare());
-    for (FSQueue childQueue : childQueues) {
-      childQueue.getMetrics().setSteadyFairShare(childQueue.getSteadyFairShare());
-      if (childQueue instanceof FSParentQueue) {
-        ((FSParentQueue) childQueue).recomputeSteadyShares();
-      }
-    }
-  }
+	public void addChildQueue(FSQueue child) {
+		childQueues.add(child);
+	}
 
-  @Override
-  public void updatePreemptionVariables() {
-    super.updatePreemptionVariables();
-    // For child queues
-    for (FSQueue childQueue : childQueues) {
-      childQueue.updatePreemptionVariables();
-    }
-  }
+	@Override
+	public void recomputeShares() {
+		policy.computeShares(childQueues, getFairShare());
+		for (FSQueue childQueue : childQueues) {
+			childQueue.getMetrics().setFairShare(childQueue.getFairShare());
+			childQueue.recomputeShares();
+		}
+	}
 
-  @Override
-  public Resource getDemand() {
-    return demand;
-  }
+	public void recomputeSteadyShares() {
+		policy.computeSteadyShares(childQueues, getSteadyFairShare());
+		for (FSQueue childQueue : childQueues) {
+			childQueue.getMetrics().setSteadyFairShare(childQueue.getSteadyFairShare());
+			if (childQueue instanceof FSParentQueue) {
+				((FSParentQueue) childQueue).recomputeSteadyShares();
+			}
+		}
+	}
 
-  @Override
-  public Resource getResourceUsage() {
-    Resource usage = Resources.createResource(0);
-    for (FSQueue child : childQueues) {
-      Resources.addTo(usage, child.getResourceUsage());
-    }
-    return usage;
-  }
+	@Override
+	public void updatePreemptionVariables() {
+		super.updatePreemptionVariables();
+		// For child queues
+		for (FSQueue childQueue : childQueues) {
+			childQueue.updatePreemptionVariables();
+		}
+	}
 
-  @Override
-  public void updateDemand() {
-    // Compute demand by iterating through apps in the queue
-    // Limit demand to maxResources
-    Resource maxRes = scheduler.getAllocationConfiguration()
-        .getMaxResources(getName());
-    demand = Resources.createResource(0);
-    for (FSQueue childQueue : childQueues) {
-      childQueue.updateDemand();
-      Resource toAdd = childQueue.getDemand();
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("Counting resource from " + childQueue.getName() + " " + 
-            toAdd + "; Total resource consumption for " + getName() +
-            " now " + demand);
-      }
-      demand = Resources.add(demand, toAdd);
-      demand = Resources.componentwiseMin(demand, maxRes);
-      if (Resources.equals(demand, maxRes)) {
-        break;
-      }
-    }
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("The updated demand for " + getName() + " is " + demand +
-          "; the max is " + maxRes);
-    }    
-  }
-  
-  private synchronized QueueUserACLInfo getUserAclInfo(
-      UserGroupInformation user) {
-    QueueUserACLInfo userAclInfo = 
-      recordFactory.newRecordInstance(QueueUserACLInfo.class);
-    List<QueueACL> operations = new ArrayList<QueueACL>();
-    for (QueueACL operation : QueueACL.values()) {
-      if (hasAccess(operation, user)) {
-        operations.add(operation);
-      } 
-    }
+	@Override
+	public Resource getDemand() {
+		return demand;
+	}
 
-    userAclInfo.setQueueName(getQueueName());
-    userAclInfo.setUserAcls(operations);
-    return userAclInfo;
-  }
-  
-  @Override
-  public synchronized List<QueueUserACLInfo> getQueueUserAclInfo(
-      UserGroupInformation user) {
-    List<QueueUserACLInfo> userAcls = new ArrayList<QueueUserACLInfo>();
-    
-    // Add queue acls
-    userAcls.add(getUserAclInfo(user));
-    
-    // Add children queue acls
-    for (FSQueue child : childQueues) {
-      userAcls.addAll(child.getQueueUserAclInfo(user));
-    }
- 
-    return userAcls;
-  }
+	@Override
+	public Resource getResourceUsage() {
+		Resource usage = Resources.createResource(0);
+		for (FSQueue child : childQueues) {
+			Resources.addTo(usage, child.getResourceUsage());
+		}
+		return usage;
+	}
 
-  @Override
-  public Resource assignContainer(FSSchedulerNode node) {
-    Resource assigned = Resources.none();
+	@Override
+	public void updateDemand() {
+		// Compute demand by iterating through apps in the queue
+		// Limit demand to maxResources
+		Resource maxRes = scheduler.getAllocationConfiguration().getMaxResources(getName());
+		demand = Resources.createResource(0);
+		for (FSQueue childQueue : childQueues) {
+			childQueue.updateDemand();
+			Resource toAdd = childQueue.getDemand();
+			if (LOG.isDebugEnabled()) {
+				LOG.debug("Counting resource from " + childQueue.getName() + " " + toAdd
+						+ "; Total resource consumption for " + getName() + " now " + demand);
+			}
+			demand = Resources.add(demand, toAdd);
+			demand = Resources.componentwiseMin(demand, maxRes);
+			if (Resources.equals(demand, maxRes)) {
+				break;
+			}
+		}
+		if (LOG.isDebugEnabled()) {
+			LOG.debug("The updated demand for " + getName() + " is " + demand + "; the max is " + maxRes);
+		}
+	}
 
-    // If this queue is over its limit, reject
-    if (!assignContainerPreCheck(node)) {
-      return assigned;
-    }
+	private synchronized QueueUserACLInfo getUserAclInfo(UserGroupInformation user) {
+		QueueUserACLInfo userAclInfo = recordFactory.newRecordInstance(QueueUserACLInfo.class);
+		List<QueueACL> operations = new ArrayList<QueueACL>();
+		for (QueueACL operation : QueueACL.values()) {
+			if (hasAccess(operation, user)) {
+				operations.add(operation);
+			}
+		}
 
-    Collections.sort(childQueues, policy.getComparator());
-    for (FSQueue child : childQueues) {
-      assigned = child.assignContainer(node);
-      if (!Resources.equals(assigned, Resources.none())) {
-        break;
-      }
-    }
-    return assigned;
-  }
+		userAclInfo.setQueueName(getQueueName());
+		userAclInfo.setUserAcls(operations);
+		return userAclInfo;
+	}
 
-  @Override
-  public RMContainer preemptContainer() {
-    RMContainer toBePreempted = null;
+	@Override
+	public synchronized List<QueueUserACLInfo> getQueueUserAclInfo(UserGroupInformation user) {
+		List<QueueUserACLInfo> userAcls = new ArrayList<QueueUserACLInfo>();
 
-    // Find the childQueue which is most over fair share
-    FSQueue candidateQueue = null;
-    Comparator<Schedulable> comparator = policy.getComparator();
-    for (FSQueue queue : childQueues) {
-      if (candidateQueue == null ||
-          comparator.compare(queue, candidateQueue) > 0) {
-        candidateQueue = queue;
-      }
-    }
+		// Add queue acls
+		userAcls.add(getUserAclInfo(user));
 
-    // Let the selected queue choose which of its container to preempt
-    if (candidateQueue != null) {
-      toBePreempted = candidateQueue.preemptContainer();
-    }
-    return toBePreempted;
-  }
+		// Add children queue acls
+		for (FSQueue child : childQueues) {
+			userAcls.addAll(child.getQueueUserAclInfo(user));
+		}
 
-  @Override
-  public List<FSQueue> getChildQueues() {
-    return childQueues;
-  }
+		return userAcls;
+	}
 
-  @Override
-  public void setPolicy(SchedulingPolicy policy)
-      throws AllocationConfigurationException {
-    boolean allowed =
-        SchedulingPolicy.isApplicableTo(policy, (parent == null)
-            ? SchedulingPolicy.DEPTH_ROOT
-            : SchedulingPolicy.DEPTH_INTERMEDIATE);
-    if (!allowed) {
-      throwPolicyDoesnotApplyException(policy);
-    }
-    super.policy = policy;
-  }
-  
-  public void incrementRunnableApps() {
-    runnableApps++;
-  }
-  
-  public void decrementRunnableApps() {
-    runnableApps--;
-  }
+	@Override
+	public Resource assignContainer(FSSchedulerNode node) {
+		Resource assigned = Resources.none();
 
-  @Override
-  public int getNumRunnableApps() {
-    return runnableApps;
-  }
+		// If this queue is over its limit, reject
+		if (!assignContainerPreCheck(node)) {
+			return assigned;
+		}
 
-  @Override
-  public void collectSchedulerApplications(
-      Collection<ApplicationAttemptId> apps) {
-    for (FSQueue childQueue : childQueues) {
-      childQueue.collectSchedulerApplications(apps);
-    }
-  }
-  
-  @Override
-  public ActiveUsersManager getActiveUsersManager() {
-    // Should never be called since all applications are submitted to LeafQueues
-    return null;
-  }
+		Collections.sort(childQueues, policy.getComparator());
 
-  @Override
-  public void recoverContainer(Resource clusterResource,
-      SchedulerApplicationAttempt schedulerAttempt, RMContainer rmContainer) {
-    // TODO Auto-generated method stub
-    
-  }
+		for (FSQueue child : childQueues) {
+			/*
+			 * FSLeafQueue assignContainer
+			 */
+			assigned = child.assignContainer(node);
+			if (!Resources.equals(assigned, Resources.none())) {
+				break;
+			}
+		}
+
+		return assigned;
+	}
+
+	@Override
+	public RMContainer preemptContainer() {
+		RMContainer toBePreempted = null;
+
+		// Find the childQueue which is most over fair share
+		FSQueue candidateQueue = null;
+		Comparator<Schedulable> comparator = policy.getComparator();
+		for (FSQueue queue : childQueues) {
+			if (candidateQueue == null || comparator.compare(queue, candidateQueue) > 0) {
+				candidateQueue = queue;
+			}
+		}
+
+		// Let the selected queue choose which of its container to preempt
+		if (candidateQueue != null) {
+			toBePreempted = candidateQueue.preemptContainer();
+		}
+		return toBePreempted;
+	}
+
+	@Override
+	public List<FSQueue> getChildQueues() {
+		return childQueues;
+	}
+
+	@Override
+	public void setPolicy(SchedulingPolicy policy) throws AllocationConfigurationException {
+		boolean allowed = SchedulingPolicy.isApplicableTo(policy,
+				(parent == null) ? SchedulingPolicy.DEPTH_ROOT : SchedulingPolicy.DEPTH_INTERMEDIATE);
+		if (!allowed) {
+			throwPolicyDoesnotApplyException(policy);
+		}
+		super.policy = policy;
+	}
+
+	public void incrementRunnableApps() {
+		runnableApps++;
+	}
+
+	public void decrementRunnableApps() {
+		runnableApps--;
+	}
+
+	@Override
+	public int getNumRunnableApps() {
+		return runnableApps;
+	}
+
+	@Override
+	public void collectSchedulerApplications(Collection<ApplicationAttemptId> apps) {
+		for (FSQueue childQueue : childQueues) {
+			childQueue.collectSchedulerApplications(apps);
+		}
+	}
+
+	@Override
+	public ActiveUsersManager getActiveUsersManager() {
+		// Should never be called since all applications are submitted to
+		// LeafQueues
+		return null;
+	}
+
+	@Override
+	public void recoverContainer(Resource clusterResource, SchedulerApplicationAttempt schedulerAttempt,
+			RMContainer rmContainer) {
+		// TODO Auto-generated method stub
+
+	}
 }

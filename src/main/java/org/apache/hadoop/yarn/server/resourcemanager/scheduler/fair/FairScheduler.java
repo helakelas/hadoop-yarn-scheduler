@@ -600,13 +600,15 @@ public class FairScheduler extends AbstractYarnScheduler<FSAppAttempt, FSSchedul
 			return;
 		}
 
-		// Enforce Groups
+		/*
+		 * Enforce Groups
+		 */
 		String normalizeQueueName = queueName;
 
 		if (normalizeQueueName.startsWith("root.")) {
 			normalizeQueueName = normalizeQueueName.substring(5);
 		}
-		
+
 		Map<String, Set<String>> groups = allocConf.getGroups();
 
 		if (MapUtils.isEmpty(groups)) {
@@ -969,6 +971,9 @@ public class FairScheduler extends AbstractYarnScheduler<FSAppAttempt, FSSchedul
 				attemptScheduling(node);
 			}
 		} else {
+			/*
+			 * assignContainer
+			 */
 			attemptScheduling(node);
 		}
 
@@ -1054,6 +1059,10 @@ public class FairScheduler extends AbstractYarnScheduler<FSAppAttempt, FSSchedul
 			int assignedContainers = 0;
 			while (node.getReservedContainer() == null) {
 				boolean assignedContainer = false;
+
+				/*
+				 * assignContainer
+				 */
 				if (!queueMgr.getRootQueue().assignContainer(node).equals(Resources.none())) {
 					assignedContainers++;
 					assignedContainer = true;
@@ -1145,16 +1154,28 @@ public class FairScheduler extends AbstractYarnScheduler<FSAppAttempt, FSSchedul
 			if (!(event instanceof NodeUpdateSchedulerEvent)) {
 				throw new RuntimeException("Unexpected event type: " + event);
 			}
+
 			NodeUpdateSchedulerEvent nodeUpdatedEvent = (NodeUpdateSchedulerEvent) event;
+
+			/*
+			 * attemptScheduling
+			 */
 			nodeUpdate(nodeUpdatedEvent.getRMNode());
+
 			break;
 		case APP_ADDED:
 			if (!(event instanceof AppAddedSchedulerEvent)) {
 				throw new RuntimeException("Unexpected event type: " + event);
 			}
+
 			AppAddedSchedulerEvent appAddedEvent = (AppAddedSchedulerEvent) event;
+
+			/*
+			 * Enforce Groups
+			 */
 			addApplication(appAddedEvent.getApplicationId(), appAddedEvent.getQueue(), appAddedEvent.getUser(),
 					appAddedEvent.getIsAppRecovering());
+
 			break;
 		case APP_REMOVED:
 			if (!(event instanceof AppRemovedSchedulerEvent)) {
